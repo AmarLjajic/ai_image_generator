@@ -16,12 +16,55 @@ const CreatePost = () => {
   const [generatingImg, setgeneratingImg] = useState(false)
   const [loading, setloading] = useState(false)
 
-  const generateImage = () => {
-    
+  const generateImage = async() => {
+    if(form.prompt){
+      try {
+        setgeneratingImg(true)
+        const response = await fetch('http://localhost:8080/api/v1/dalle', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ prompt: form.prompt})
+        })
+
+        const data = await response.json();
+        setForm({ ...form, photo: `data:image/jpeg;base64,${data.photo}` });
+      } catch (err) {
+        alert(err);
+      } finally {
+        setgeneratingImg(false);
+      }
+    } else {
+      alert('Please provide proper prompt');
+    }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit =  async(e) => {
+    e.preventDefault();
 
+    if(form.prompt && form.photo){
+      setloading(true);
+
+      try{
+        const response = await fetch('http://localhost:8080/api/v1/post', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json', 
+          },
+          body: JSON.stringify(form)
+        })
+
+        await response.json();
+        navigate('/');
+      } catch (err) {
+        alert(err)
+      } finally{
+        setloading(false);
+      }
+    } else {
+      alert('Please enter a prompt and generate an image')
+    }
   }
 
   const handleChange = (e) => {
@@ -104,13 +147,13 @@ const CreatePost = () => {
         <div className="mt-10">
             <p className="mt-2 text-[666e75] text-[14px]">Once you have created the image you want,
                you can share it with others in the community</p>
-               <buton
+               <button
                 type="submit"
                 className="mt-3 text-white bg-[#6469ff] font-medium rounded-md text-sm w-full sm:w-auto px-5
                 px-5 py-2.5 text-center"
                >
                 {loading ? 'Sharing' : 'Share with the community'}
-               </buton>
+               </button>
         </div>
       </form>
     </section>
